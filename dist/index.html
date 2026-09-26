@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#11151f" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="description"
+      content="A calm, configurable Pomodoro timer for focused work and intentional breaks."
+    />
+    <title>Tempo — Pomodoro timer</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2311151f'/%3E%3Ccircle cx='32' cy='34' r='17' fill='none' stroke='%23ff765f' stroke-width='7'/%3E%3Cpath d='M32 12v7M23 10h18' stroke='%23f4f1e8' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Tempo home">
+          <span class="brand-mark" aria-hidden="true">
+            <span class="brand-mark-hand"></span>
+          </span>
+          <span>
+            <strong>tempo</strong>
+            <small>focus for now</small>
+          </span>
+        </a>
+        <div class="topbar-actions">
+          <button class="topbar-button how-to-button" id="howToButton" type="button" aria-haspopup="dialog" aria-controls="howToDialog" aria-label="How to use">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M9.8 9.1a2.4 2.4 0 1 1 3.7 2c-.9.6-1.5 1-1.5 2.1M12 16.6h.01"></path></svg>
+            <span>How to use</span>
+          </button>
+          <button class="topbar-button" id="focusModeButton" type="button" aria-pressed="false" aria-label="Focus mode">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9V5.5H8M16 5.5h3.5V9M19.5 15v3.5H16M8 18.5H4.5V15"></path></svg>
+            <span id="focusModeLabel">Focus mode</span>
+          </button>
+          <button class="topbar-button install-button" id="installButton" type="button" aria-haspopup="dialog" aria-controls="installDialog" aria-expanded="false" aria-label="Install Tempo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10M8 10l4 4 4-4M5 18.5h14"></path></svg>
+            <span>Install</span>
+          </button>
+          <div class="topbar-status" aria-label="Timer mode">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="topbarStatus">Focus mode</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <div class="timer-column">
+        <section class="timer-card" id="timerCard" aria-labelledby="timerHeading">
+          <div class="timer-card-header">
+            <div>
+              <p class="eyebrow" id="phaseEyebrow">Focus · round 01</p>
+              <h1 id="timerHeading">Deep work</h1>
+              <button class="current-task" id="currentTask" type="button" aria-label="Choose a task">
+                <span class="current-task-mark" aria-hidden="true"></span>
+                <span id="currentTaskLabel">No task selected · choose one from your list</span>
+              </button>
+            </div>
+            <div class="live-indicator" id="liveIndicator">
+              <span class="live-pip" aria-hidden="true"></span>
+              <span id="phaseState">Ready</span>
+            </div>
+          </div>
+
+          <div class="timer-stage">
+            <svg class="progress-ring" viewBox="0 0 260 260" role="img" aria-labelledby="progressTitle progressDesc">
+              <title id="progressTitle">Timer progress</title>
+              <desc id="progressDesc">The ring fills as the current focus or break period progresses.</desc>
+              <circle class="ring-track" cx="130" cy="130" r="108"></circle>
+              <circle class="ring-progress" id="ringProgress" cx="130" cy="130" r="108"></circle>
+            </svg>
+            <div class="time-readout">
+              <span class="time-value" id="timeValue">25:00</span>
+              <span class="time-label" id="timeLabel">to make space for focus</span>
+            </div>
+          </div>
+
+          <p class="completion-note" id="completionNote" aria-live="polite">Settle in. Your next 25 minutes are yours.</p>
+
+          <div class="reward-toast" id="rewardToast" role="status" aria-live="polite" hidden>
+            <span class="reward-icon" aria-hidden="true">✦</span>
+            <span id="rewardToastText"></span>
+          </div>
+
+          <div class="timer-actions">
+            <button class="primary-button" id="startPauseButton" type="button">
+              <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path id="startPauseIcon" d="M8 5.5 18 12 8 18.5Z"></path>
+              </svg>
+              <span id="startPauseLabel">Start focus</span>
+            </button>
+            <button class="secondary-button" id="resetButton" type="button" aria-label="Reset timer">
+              <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5.5 8.5A7.5 7.5 0 1 1 5 15"></path>
+                <path d="M5.5 4.5v4h4"></path>
+              </svg>
+              <span>Reset</span>
+            </button>
+          </div>
+
+          <div class="phase-switcher" aria-label="Timer phase">
+            <button class="phase-chip active" id="focusPhaseButton" type="button" data-phase="focus" aria-pressed="true">
+              <span class="phase-chip-dot"></span>
+              Focus
+              <strong id="focusLengthLabel">25m</strong>
+            </button>
+            <button class="phase-chip" id="breakPhaseButton" type="button" data-phase="break" aria-pressed="false">
+              <span class="phase-chip-dot"></span>
+              <span id="breakPhaseLabel">Break</span>
+              <strong id="breakLengthLabel">05m</strong>
+            </button>
+          </div>
+        </section>
+
+          <section class="panel tasks-panel" aria-labelledby="tasksHeading">
+            <div class="panel-heading compact-heading">
+              <div>
+                <p class="eyebrow">Keep it close</p>
+                <h2 id="tasksHeading">Tasks</h2>
+              </div>
+              <span class="task-count" id="taskCount">0 / 0</span>
+            </div>
+            <form class="task-form" id="taskForm">
+              <label class="sr-only" for="taskInput">Add a task</label>
+              <input id="taskInput" name="task" type="text" maxlength="100" placeholder="What needs your attention?" autocomplete="off" />
+              <label class="estimate-field" for="taskEstimate">
+                <span class="sr-only">Estimated Pomodoros</span>
+                <input id="taskEstimate" type="number" min="1" max="20" step="1" value="1" inputmode="numeric" aria-label="Estimated Pomodoros" />
+                <span>×</span>
+              </label>
+              <button class="icon-button add-task-button" type="submit" aria-label="Add task">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+              </button>
+            </form>
+            <p class="tasks-help">Click a task to make it your focus.</p>
+            <ul class="task-list" id="taskList" aria-live="polite"></ul>
+            <p class="empty-tasks" id="emptyTasks">One clear next step is enough.</p>
+          </section>
+
+          <section class="panel data-panel" aria-labelledby="dataHeading">
+            <div class="panel-heading compact-heading">
+              <div>
+                <p class="eyebrow">Your data</p>
+                <h2 id="dataHeading">Take it with you</h2>
+              </div>
+              <svg class="settings-glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v12M7.5 11.5 12 16l4.5-4.5M5 20h14"></path></svg>
+            </div>
+            <div class="data-actions">
+              <button class="small-button" id="exportJsonButton" type="button">Export JSON</button>
+              <button class="small-button" id="exportCsvButton" type="button">Export CSV</button>
+              <button class="small-button" id="importJsonButton" type="button">Import backup</button>
+              <input id="importFileInput" type="file" accept="application/json,.json,text/csv,.csv" hidden />
+            </div>
+            <p class="data-note" id="dataNote">Back up tasks, settings, and daily history.</p>
+          </section>
+        </div>
+
+        <aside class="side-column" aria-label="Session details">
+          <section class="panel stats-panel" aria-labelledby="statsHeading">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Current session</p>
+                <h2 id="statsHeading">A little momentum</h2>
+              </div>
+              <span class="session-badge" id="sessionBadge">01</span>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-block">
+                <span class="stat-value" id="focusCount">0</span>
+                <span class="stat-label">rounds done</span>
+              </div>
+              <div class="stat-block">
+                <span class="stat-value" id="focusMinutes">0</span>
+                <span class="stat-label">focus minutes</span>
+              </div>
+            </div>
+            <div class="session-track" aria-hidden="true">
+              <span class="session-track-fill" id="sessionTrackFill"></span>
+            </div>
+            <p class="panel-footnote" id="sessionFootnote">Your first round is ready when you are.</p>
+          </section>
+
+          <section class="panel gamification-panel" aria-labelledby="gamificationHeading">
+            <div class="panel-heading compact-heading">
+              <div>
+                <p class="eyebrow">Level up</p>
+                <h2 id="gamificationHeading">Focus XP</h2>
+              </div>
+              <span class="level-badge" id="xpLevel">Lv 1</span>
+            </div>
+            <div class="xp-summary">
+              <div>
+                <strong id="xpTotal">0 XP</strong>
+                <span id="xpNextLabel">100 XP to next level</span>
+              </div>
+              <span id="xpLevelLabel">Level 1</span>
+            </div>
+            <div class="xp-track" id="xpTrack" role="progressbar" aria-label="XP progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0 of 100 XP">
+              <span id="xpTrackFill"></span>
+            </div>
+            <div class="goal-row">
+              <span>Daily goal</span>
+              <strong id="dailyGoalLabel">0 / 4 rounds</strong>
+            </div>
+            <div class="badge-gallery" id="badgeGallery" aria-label="Badge collection"></div>
+            <p class="panel-footnote" id="badgeFootnote">Complete a round to earn your first badge.</p>
+          </section>
+
+          <section class="panel history-panel" aria-labelledby="historyHeading">
+            <div class="panel-heading compact-heading">
+              <div>
+                <p class="eyebrow">Keep the thread</p>
+                <h2 id="historyHeading">Daily history</h2>
+              </div>
+              <div class="streak-badge"><span class="streak-flame" aria-hidden="true">✦</span><span id="historyStreak">0 day streak</span></div>
+            </div>
+            <div class="history-today">
+              <div>
+                <span class="history-today-label">Today</span>
+                <strong id="historyTodayRounds">0 rounds</strong>
+              </div>
+              <span class="history-today-minutes" id="historyTodayMinutes">0 min</span>
+            </div>
+            <div class="history-list" id="historyList"></div>
+          </section>
+
+          <section class="panel settings-panel" aria-labelledby="settingsHeading">
+            <div class="panel-heading compact-heading">
+              <div>
+                <p class="eyebrow">Shape the rhythm</p>
+                <h2 id="settingsHeading">Settings</h2>
+              </div>
+              <svg class="settings-glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3M6 6l2.1 2.1M15.9 15.9 18 18M18 6l-2.1 2.1M8.1 15.9 6 18"></path><circle cx="12" cy="12" r="3.2"></circle></svg>
+            </div>
+            <div class="preset-block">
+              <span class="setting-caption">Presets</span>
+              <div class="preset-grid" role="group" aria-label="Timer presets">
+                <button class="preset-button active" type="button" data-preset="standard"><strong>Standard</strong><span>25 / 5</span></button>
+                <button class="preset-button" type="button" data-preset="deep"><strong>Deep work</strong><span>50 / 10</span></button>
+                <button class="preset-button" type="button" data-preset="sprint"><strong>Quick sprint</strong><span>15 / 3</span></button>
+              </div>
+            </div>
+            <div class="settings-fields">
+              <label class="setting-row" for="workMinutes">
+                <span>
+                  <strong>Focus length</strong>
+                  <small>Time for a work round</small>
+                </span>
+                <span class="number-field">
+                  <input id="workMinutes" type="number" min="1" max="120" step="1" value="25" inputmode="numeric" />
+                  <span>min</span>
+                </span>
+              </label>
+              <label class="setting-row" for="breakMinutes">
+                <span>
+                  <strong>Short break</strong>
+                  <small>Time to reset between rounds</small>
+                </span>
+                <span class="number-field">
+                  <input id="breakMinutes" type="number" min="1" max="60" step="1" value="5" inputmode="numeric" />
+                  <span>min</span>
+                </span>
+              </label>
+              <label class="setting-row" for="longBreakMinutes">
+                <span>
+                  <strong>Long break</strong>
+                  <small>After every <span id="longBreakEveryLabel">4</span> focus rounds</small>
+                </span>
+                <span class="number-field">
+                  <input id="longBreakMinutes" type="number" min="1" max="90" step="1" value="15" inputmode="numeric" />
+                  <span>min</span>
+                </span>
+              </label>
+              <div class="setting-row">
+                <span>
+                  <strong>Auto-advance</strong>
+                  <small>Start the next phase at zero</small>
+                </span>
+                <label class="switch" for="autoAdvanceToggle">
+                  <input id="autoAdvanceToggle" type="checkbox" />
+                  <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                  <span class="sr-only">Auto-advance</span>
+                </label>
+              </div>
+              <div class="setting-row sound-row">
+                <span>
+                  <strong>Sound on complete</strong>
+                  <small>Play a soft chime at zero</small>
+                </span>
+                <label class="switch" for="soundToggle">
+                  <input id="soundToggle" type="checkbox" checked />
+                  <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                  <span class="sr-only">Sound on complete</span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <span>
+                  <strong>Browser notifications</strong>
+                  <small id="notificationHelp">Alert me when a phase ends</small>
+                </span>
+                <label class="switch" for="notificationToggle">
+                  <input id="notificationToggle" type="checkbox" />
+                  <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                  <span class="sr-only">Browser notifications</span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <span>
+                  <strong>XP celebrations</strong>
+                  <small>Show a reward after focus rounds</small>
+                </span>
+                <label class="switch" for="celebrationToggle">
+                  <input id="celebrationToggle" type="checkbox" checked />
+                  <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                  <span class="sr-only">XP celebrations</span>
+                </label>
+              </div>
+            </div>
+            <p class="settings-note" id="settingsNote">Changes are ready for your next reset.</p>
+          </section>
+
+        </aside>
+      </main>
+
+      <footer class="footer-note">
+        <span>One round at a time.</span>
+        <span class="footer-key"><kbd>Space</kbd> start / pause · <kbd>R</kbd> reset · <kbd>N</kbd> new task</span>
+      </footer>
+
+      <div class="how-to-dialog" id="howToDialog" hidden>
+        <div class="how-to-backdrop" data-close-how-to="true"></div>
+        <section class="how-to-sheet" role="dialog" aria-modal="true" aria-labelledby="howToTitle" aria-describedby="howToIntro" tabindex="-1">
+          <div class="how-to-header">
+            <div>
+              <p class="eyebrow">A calm starting point</p>
+              <h2 id="howToTitle">How to use Tempo</h2>
+              <p id="howToIntro">Choose one small thing, give it a round, then take the break.</p>
+            </div>
+            <button class="dialog-close" id="closeHowToButton" type="button" aria-label="Close How to use guide">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+            </button>
+          </div>
+          <div class="how-to-steps">
+            <article class="how-to-step">
+              <span class="how-to-number">01</span>
+              <div><h3>Set your rhythm</h3><p>Pick Standard, Deep work, or Quick sprint. You can also edit the focus, short-break, and long-break lengths.</p></div>
+            </article>
+            <article class="how-to-step">
+              <span class="how-to-number">02</span>
+              <div><h3>Choose a task</h3><p>Add a task with an estimated number of Pomodoros, then click it to make it your current focus.</p></div>
+            </article>
+            <article class="how-to-step">
+              <span class="how-to-number">03</span>
+              <div><h3>Start one round</h3><p>Start, pause, or reset anytime. After four focus rounds, Tempo prepares your longer break.</p></div>
+            </article>
+            <article class="how-to-step">
+              <span class="how-to-number">04</span>
+              <div><h3>Make it yours</h3><p>Turn on auto-advance or notifications, use Focus mode for a quieter screen, and export your history whenever you want.</p></div>
+            </article>
+          </div>
+          <div class="how-to-footer">
+            <span>Quick keys</span>
+            <span><kbd>Space</kbd> start / pause · <kbd>R</kbd> reset · <kbd>N</kbd> new task</span>
+          </div>
+        </section>
+      </div>
+
+      <div class="how-to-dialog install-dialog" id="installDialog" hidden>
+        <div class="how-to-backdrop" data-close-install="true"></div>
+        <section class="how-to-sheet" role="dialog" aria-modal="true" aria-labelledby="installTitle" aria-describedby="installIntro" tabindex="-1">
+          <div class="how-to-header">
+            <div>
+              <p class="eyebrow">Keep Tempo close</p>
+              <h2 id="installTitle">Install the app</h2>
+              <p id="installIntro">Use Tempo like a small, offline-friendly app from your device.</p>
+            </div>
+            <button class="dialog-close" id="closeInstallButton" type="button" aria-label="Close install guide">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+            </button>
+          </div>
+          <div class="install-options">
+            <article class="install-option">
+              <span class="how-to-number">01</span>
+              <div><h3>Chrome or Edge</h3><p>Choose the install icon in the address bar, or open the browser menu and choose <strong>Install Tempo</strong>.</p></div>
+            </article>
+            <article class="install-option">
+              <span class="how-to-number">02</span>
+              <div><h3>iPhone or iPad</h3><p>Tap Share in Safari, choose <strong>Add to Home Screen</strong>, then confirm.</p></div>
+            </article>
+            <article class="install-option">
+              <span class="how-to-number">03</span>
+              <div><h3>Android</h3><p>Open the browser menu and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</p></div>
+            </article>
+          </div>
+          <div class="how-to-footer">
+            <span>Works offline after the first visit</span>
+            <span>Close this guide anytime</span>
+          </div>
+        </section>
+      </div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>

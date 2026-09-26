@@ -1,0 +1,8 @@
+.sites-checkout/
+outputs/
+.playwright-cli/
+.qa/
+*.tar.gz
+node_modules/
+Thumbs.db
+.DS_Store
